@@ -89,6 +89,34 @@ ORDER BY release_year asc;
 
 
 -- Q4) Create a stored function
+-- add price rate to album prices, show album name price and price rate
+
+DELIMITER //
+CREATE FUNCTION price_range(
+    price DECIMAL
+)
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+    DECLARE rate VARCHAR(20);
+    IF price > 10.99 THEN
+        SET rate = 'HIGH';
+    ELSEIF price >= 8.99 AND price <= 10.99 THEN
+        SET rate = 'MEDIUM';
+    ELSEIF price < 8.99 THEN
+        SET rate = 'LOW';
+    END IF;
+    RETURN (rate);
+END//
+DELIMITER ;
+
+SELECT pr.album_ID, al.album_name, price, price_range(price)
+FROM album_price pr
+LEFT JOIN album al
+ON al.album_ID = pr.album_id
+ORDER BY price desc;
+
+-- drop function price_range;
 
 
 -- Q5) subquery
@@ -129,6 +157,7 @@ WHERE aw.award_ID != "5";
 -- insert new artist id and name into artist table
 
 SELECT * FROM artist;
+
 DELIMITER //
 -- Create Stored Procedure
 CREATE PROCEDURE InsertValue(
@@ -137,34 +166,43 @@ IN artist_name VARCHAR(50))
 
 BEGIN
 INSERT INTO artist(artist_id, artist_name)
-VALUES (9, "Adele");
+VALUES (artist_ID, artist_name);
 END//
 
 DELIMITER ;
+CALL InsertValue (9, 'Adele');
 
 SELECT * FROM artist;
--- drop procedure insertvalue;
+-- SET SQL_SAFE_UPDATES = 0;
+-- DELETE FROM artist WHERE artist_name = "Adele"
 
 
 -- Q8) In your database, create a trigger and demonstrate how it runs
+-- capitalise all letters in any artist names entered into tables
+
+SELECT * FROM artist;
+DELIMITER //
+
+CREATE TRIGGER Before_Insert
+BEFORE INSERT on artist
+FOR EACH ROW
+BEGIN
+    SET NEW.artist_name = UPPER(NEW.artist_name);
+END//
+DELIMITER ;
+INSERT INTO artist (artist_ID, artist_name)
+VALUES (10, "drake");
+
+SELECT * FROM artist;
+-- drop trigger before_insert;
 
 
 -- Q9) Create an event and demonstrate how it works ??????
 
-SET GLOBAL event_scheduler = ON; -- enable event scheduler.
-SELECT @@event_scheduler; 
-CREATE EVENT myevent
-    ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 second
-    DO
-      UPDATE music.album_release_year SET mycol = release_year + 1;
-show events from music;
-      
-drop event myevent;
-
 
 
 -- Q10) Create a view that uses at least 3-4 base tables
--- Create view pre2010 albums that cost at least £7.99
+-- Create view showing all pre2010 albums that cost at least £7.99
 
 CREATE VIEW pre2010 AS
 SELECT art.artist_name, al.album_name, res.release_year, pr.price
@@ -179,10 +217,10 @@ WHERE release_year < 2010
 AND price >= 7.99
 ORDER BY price desc;
 
--- drop view pre2010;
+SELECT * FROM music.pre2010;
 
 
--- Q11) group by query
+-- Q11) Use a group by query
 -- count number of albums under each genre (count albums in each genre), order by count size
 
 SELECT genre_name, COUNT(album_ID) AS Count
@@ -190,6 +228,5 @@ FROM album al
 LEFT JOIN genre gen
 ON al.genre_ID = gen.genre_ID
 GROUP BY genre_name ORDER BY Count desc;
-
 
 
