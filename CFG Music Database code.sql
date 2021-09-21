@@ -199,9 +199,33 @@ SELECT * FROM artist;
 
 -- Q9) Create an event and demonstrate how it works ??????
 
+SET GLOBAL event_scheduler = ON; -- enable event scheduler.
+USE music;
+
+CREATE TABLE monitoring_release_year
+(ID INT NOT NULL AUTO_INCREMENT,
+Last_Update TIMESTAMP,
+PRIMARY KEY (ID));
+INSERT INTO monitoring_release_year (id, last_update)
+VALUES
+	(1,now());
+DELIMITER //
+
+CREATE EVENT myevent
+ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 10 second
+DO begin
+      UPDATE music.monitoring_release_year SET Last_update = Last_update + 10;
+show events from monitoring_release_year;
+END//
+DELIMITER ;
+-- Select data again after 10 seconds
+SELECT * FROM monitoring_release_year;
+
+-- DROP TABLE monitoring_release_year;      
+-- DROP EVENT myevent;
 
 
--- Q10) Create a view that uses at least 3-4 base tables
+-- Q10) Create a view that uses at least 3-4 base tables (hmm...)
 -- Create view showing all pre2010 albums that cost at least £7.99
 
 CREATE VIEW pre2010 AS
